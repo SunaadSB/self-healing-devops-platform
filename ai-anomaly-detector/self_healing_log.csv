@@ -1,0 +1,11 @@
+timestamp,event,details
+2026-08-13 11:46:00,SYSTEM_NORMAL,No self-healing action required
+2026-08-13 11:48:39,SYSTEM_NORMAL,No self-healing action required
+2026-08-13 11:57:08,SYSTEM_NORMAL,No self-healing action required
+2026-08-13 12:03:48,ANOMALY_DETECTED,Isolation Forest detected 2 consecutive anomalies
+2026-08-13 12:03:48,SELF_HEALING_TRIGGERED,Restarted user-service deployment
+2026-08-13 12:03:48,RECOVERY_SUCCESS,user-service deployment recovered successfully
+2026-08-13 12:43:01,ANOMALY_DETECTED,Isolation Forest detected 2 consecutive anomalies
+2026-08-13 12:43:01,SELF_HEALING_TRIGGERED,Restarted user-service deployment
+2026-08-13 12:43:01,RECOVERY_SUCCESS,user-service deployment recovered successfully
+2026-08-13 12:49:30,SYSTEM_NORMAL,No self-healing action required
