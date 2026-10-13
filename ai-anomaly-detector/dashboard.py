@@ -25,7 +25,7 @@ st_autorefresh(
 # PROMETHEUS CONNECTION
 # ============================================================
 
-PROMETHEUS_URL = "http://localhost:30090"
+PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "http://localhost:30090")
 
 prom = PrometheusConnect(
     url=PROMETHEUS_URL,
