@@ -35,7 +35,7 @@ The gateway's default upstream URLs target the published host ports: user `127.0
 - `monitoring/prometheus.yml` is for a Prometheus process running on the same host as the Compose-published service ports. It scrapes `localhost:8001`, `localhost:8002`, and `localhost:8003`.
 - `monitoring/prometheus-config.yaml` is for Kubernetes and scrapes the Kubernetes service DNS names on their service ports.
 
-For the AI detector, `PROMETHEUS_URL` currently defaults to `http://localhost:9090`, appropriate when Prometheus is available on the same host. For the dashboard, the default is `http://localhost:30090`, the NodePort exposed by the Kubernetes Prometheus manifest.
+The detector and dashboard both accept a `PROMETHEUS_URL` environment variable so the endpoint can be set for the environment where each process runs. The detector defaults to `http://localhost:9090`; the dashboard defaults to `http://localhost:30090` (the NodePort exposed by the Kubernetes Prometheus manifest). For example, set `PROMETHEUS_URL` to the actual Prometheus address before launching either process. These defaults assume the process can reach Prometheus through localhost; a container should use a reachable service name or host address instead.
 
 ## Kubernetes
 
