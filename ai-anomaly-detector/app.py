@@ -13,7 +13,7 @@ from prometheus_api_client import PrometheusConnect
 # CONFIGURATION
 # ============================================================
 
-PROMETHEUS_URL = "http://localhost:9090"
+PROMETHEUS_URL = os.getenv("PROMETHEUS_URL", "http://localhost:9090")
 NAMESPACE = "default"
 SERVICE_NAME = "user-service"
 MODEL_FILE = "isolation_forest_model.pkl"
