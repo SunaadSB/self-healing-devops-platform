@@ -21,8 +21,12 @@ MODEL_FILE = "isolation_forest_model.pkl"
 METRICS_FILE = "metrics.csv"
 LOG_FILE = "self_healing_log.csv"
 
+
 REQUIRED_ANOMALIES = 2
 RECOVERY_TIMEOUT = 60
+
+# Safety: do not restart Kubernetes during testing.
+DRY_RUN = True
 
 
 FEATURES = [
@@ -206,23 +210,24 @@ def verify_recovery(
 # PROMETHEUS QUERIES
 # ============================================================
 
-queries = {
 
+queries = {
     "cpu":
-        "rate(process_cpu_seconds_total[5m]) * 100",
+        'sum(rate(process_cpu_seconds_total{job="user-service"}[5m])) * 100',
 
     "memory":
-        "process_resident_memory_bytes",
+        'sum(process_resident_memory_bytes{job="user-service"})',
 
     "user_requests":
-        "rate(user_requests_total[5m])",
+        'sum(rate(user_requests_total{job="user-service"}[5m]))',
 
     "order_requests":
-        "rate(order_requests_total[5m])",
+        'sum(rate(order_requests_total{job="order-service"}[5m]))',
 
     "payment_requests":
-        "rate(payment_requests_total[5m])"
+        'sum(rate(payment_requests_total{job="payment-service"}[5m]))'
 }
+
 
 
 # ============================================================
@@ -230,24 +235,17 @@ queries = {
 # ============================================================
 
 end_time = datetime.now()
-
-start_time = (
-    end_time - timedelta(hours=1)
-)
+start_time = end_time - timedelta(hours=1)
 
 data = {}
-
 
 print()
 print("=" * 60)
 print("COLLECTING PROMETHEUS METRICS")
 print("=" * 60)
 
-
 for name, query in queries.items():
-
     try:
-
         result = prom.custom_query_range(
             query=query,
             start_time=start_time,
@@ -256,131 +254,89 @@ for name, query in queries.items():
         )
 
         if result:
-
-            values = result[0]["values"]
+            # Keep each sample's timestamp and value.
+            samples = result[0].get("values", [])
 
             data[name] = [
-                float(value[1])
-                for value in values
+                (float(timestamp), float(value))
+                for timestamp, value in samples
             ]
 
             print(
-                f"✅ {name}: "
-                f"{len(data[name])} samples"
+                f"✅ {name}: {len(data[name])} samples"
             )
-
         else:
-
-            print(
-                f"⚠️ {name}: no data"
-            )
+            print(f"⚠️ {name}: no data")
 
     except Exception as e:
-
-        print(
-            f"❌ {name}: {e}"
-        )
+        print(f"❌ {name}: {e}")
 
 
 # ============================================================
 # VALIDATE DATA
 # ============================================================
 
-if not data:
-
-    print(
-        "❌ No Prometheus data returned."
-    )
-
-    log_event(
-        "ERROR",
-        "No Prometheus data returned"
-    )
-
+if not data or any(not values for values in data.values()):
+    message = "One or more Prometheus metrics contain no samples."
+    print(f"❌ {message}")
+    log_event("ERROR", message)
     raise SystemExit(1)
 
-
 # ============================================================
-# ALIGN METRIC LENGTHS
+# ALIGN METRICS BY TIMESTAMP
 # ============================================================
 
-min_length = min(
-    len(values)
-    for values in data.values()
-)
+metric_frames = {}
 
-if min_length == 0:
-
-    print(
-        "❌ Metrics contain no samples."
+for name, samples in data.items():
+    metric_frames[name] = pd.Series(
+        {timestamp: value for timestamp, value in samples},
+        name=name,
+        dtype=float
     )
 
-    log_event(
-        "ERROR",
-        "Metrics contain no samples"
-    )
+# Retain only timestamps shared by all metrics.
+aligned_data = pd.concat(
+    list(metric_frames.values()),
+    axis=1,
+    join="inner"
+).sort_index()
 
+if aligned_data.empty:
+    message = "No shared timestamps across Prometheus metrics."
+    print(f"❌ {message}")
+    log_event("ERROR", message)
     raise SystemExit(1)
 
-
-for name in data:
-
-    data[name] = (
-        data[name][-min_length:]
-    )
-
-
-# ============================================================
-# CREATE DATAFRAME
-# ============================================================
-
-df = pd.DataFrame(data)
+# The model expects numeric features, not timestamps.
+df = aligned_data.reset_index(drop=True)
 
 print()
-print(
-    f"Collected samples: {len(df)}"
-)
-
+print(f"✅ Aligned samples: {len(df)}")
 print(df.head())
-
 
 # ============================================================
 # CHECK REQUIRED FEATURES
 # ============================================================
 
 missing_features = [
-    feature
-    for feature in FEATURES
+    feature for feature in FEATURES
     if feature not in df.columns
 ]
 
 if missing_features:
-
-    print(
-        f"❌ Missing features: "
-        f"{missing_features}"
-    )
-
-    log_event(
-        "ERROR",
-        f"Missing features: {missing_features}"
-    )
-
+    message = f"Missing features: {missing_features}"
+    print(f"❌ {message}")
+    log_event("ERROR", message)
     raise SystemExit(1)
-
 
 # ============================================================
 # SAVE METRICS
 # ============================================================
 
-df.to_csv(
-    METRICS_FILE,
-    index=False
-)
+df.to_csv(METRICS_FILE, index=False)
 
-print(
-    f"Saved real metrics to {METRICS_FILE}"
-)
+print(f"Saved aligned metrics to {METRICS_FILE}")
 
 
 # ============================================================
@@ -425,6 +381,7 @@ print("Current metrics:")
 print(latest)
 
 
+
 # ============================================================
 # AI ANOMALY DETECTION
 # ============================================================
@@ -434,37 +391,42 @@ print("=" * 60)
 print("AI ANOMALY DETECTION")
 print("=" * 60)
 
+# Use distinct historical metric samples, not repeated
+# predictions on the same latest sample.
+recent = df[FEATURES].tail(REQUIRED_ANOMALIES)
 
+if len(recent) < REQUIRED_ANOMALIES:
+    message = (
+        f"Need {REQUIRED_ANOMALIES} distinct samples; "
+        f"only {len(recent)} available"
+    )
+    print(f"Insufficient data: {message}")
+    log_event("ERROR", message)
+    raise SystemExit(1)
+
+predictions = model.predict(recent)
+
+# Count only the consecutive anomalous observations ending
+# at the newest sample. A normal sample resets the count.
 anomaly_count = 0
 
-
-for attempt in range(
-    REQUIRED_ANOMALIES
-):
-
-    prediction = model.predict(
-        latest
-    )
-
-    if prediction[0] == -1:
-
+for prediction in predictions:
+    if prediction == -1:
         anomaly_count += 1
-
         print(
-            f"🚨 Anomaly detected "
-            f"({anomaly_count}/"
-            f"{REQUIRED_ANOMALIES})"
+            f"Anomaly detected "
+            f"({anomaly_count}/{REQUIRED_ANOMALIES})"
         )
-
     else:
-
-        print(
-            "✅ System is NORMAL"
-        )
-
         anomaly_count = 0
+        print("System is NORMAL")
 
-        break
+print(
+    f"Consecutive anomalies in recent samples: "
+    f"{anomaly_count}/{REQUIRED_ANOMALIES}"
+)
+
+
 
 
 # ============================================================
@@ -476,100 +438,52 @@ print("=" * 60)
 print("SELF-HEALING DECISION")
 print("=" * 60)
 
-
 if anomaly_count >= REQUIRED_ANOMALIES:
-
-    print(
-        "🚨 CONFIRMED ANOMALY"
-    )
-
-    # Log anomaly
+    print("🚨 CONFIRMED ANOMALY")
 
     log_event(
         "ANOMALY_DETECTED",
-        (
-            "Isolation Forest detected "
-            f"{REQUIRED_ANOMALIES} "
-            "consecutive anomalies"
-        )
+        f"Isolation Forest detected {REQUIRED_ANOMALIES} consecutive anomalies"
     )
 
-    # Restart service
-
-    try:
-
-        restart_service(
-            SERVICE_NAME
-        )
-
-        log_event(
-            "SELF_HEALING_TRIGGERED",
-            (
-                f"Restarted "
-                f"{SERVICE_NAME} deployment"
-            )
-        )
-
-    except Exception as e:
-
+    if DRY_RUN:
         print(
-            f"❌ Self-healing failed: {e}"
+            f"🛡️ DRY RUN: would restart "
+            f"{SERVICE_NAME} deployment; no restart performed."
         )
-
         log_event(
-            "SELF_HEALING_FAILED",
-            str(e)
+            "DRY_RUN",
+            f"Would restart {SERVICE_NAME} deployment"
         )
-
-        raise SystemExit(1)
-
-
-    # Verify recovery
-
-    recovered = verify_recovery(
-        SERVICE_NAME
-    )
-
-    if recovered:
-
-        log_event(
-            "RECOVERY_SUCCESS",
-            (
-                f"{SERVICE_NAME} "
-                "deployment recovered successfully"
-            )
-        )
-
-        print(
-            "✅ Self-healing and recovery "
-            "completed successfully"
-        )
-
     else:
-
-        log_event(
-            "RECOVERY_FAILED",
-            (
-                f"{SERVICE_NAME} "
-                "did not recover within timeout"
+        try:
+            restart_service(SERVICE_NAME)
+            log_event(
+                "SELF_HEALING_TRIGGERED",
+                f"Restarted {SERVICE_NAME} deployment"
             )
-        )
+        except Exception as e:
+            print(f"❌ Self-healing failed: {e}")
+            log_event("SELF_HEALING_FAILED", str(e))
+            raise SystemExit(1)
 
-        print(
-            "❌ Self-healing recovery failed"
-        )
+        recovered = verify_recovery(SERVICE_NAME)
 
-
+        if recovered:
+            log_event(
+                "RECOVERY_SUCCESS",
+                f"{SERVICE_NAME} deployment recovered successfully"
+            )
+            print("✅ Self-healing and recovery completed successfully")
+        else:
+            log_event(
+                "RECOVERY_FAILED",
+                f"{SERVICE_NAME} did not recover within timeout"
+            )
+            print("❌ Self-healing recovery failed")
 else:
-
-    print(
-        "✅ No self-healing action required"
-    )
-
-    log_event(
-        "SYSTEM_NORMAL",
-        "No self-healing action required"
-    )
+    print("✅ No self-healing action required")
+    log_event("SYSTEM_NORMAL", "No self-healing action required")
 
 
 # ============================================================
