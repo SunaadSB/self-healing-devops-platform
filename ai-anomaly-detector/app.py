@@ -3,6 +3,9 @@ import csv
 import os
 import time
 
+import urllib.error
+import urllib.request
+
 import joblib
 import pandas as pd
 from kubernetes import client, config
@@ -27,6 +30,7 @@ RECOVERY_TIMEOUT = 60
 
 # Safety: do not restart Kubernetes during testing.
 DRY_RUN = True
+RECOVERY_APPROVED = False
 
 
 FEATURES = [
@@ -59,7 +63,7 @@ try:
     print("Kubernetes API connection successful")
 
 except Exception as e:
-    print(f"❌ Kubernetes connection failed: {e}")
+    print(f"[ERROR] Kubernetes connection failed: {e}")
     raise SystemExit(1)
 
 
@@ -133,77 +137,133 @@ def restart_service(deployment_name):
 # VERIFY KUBERNETES RECOVERY
 # ============================================================
 
+
 def verify_recovery(
     deployment_name,
-    timeout=RECOVERY_TIMEOUT
+    timeout=RECOVERY_TIMEOUT,
+    expected_generation=None
 ):
-
-    print(
-        f"Waiting for {deployment_name} to recover..."
-    )
+    """Confirm Kubernetes has observed the rollout and all replicas are ready."""
+    print(f"Waiting for {deployment_name} to recover...")
 
     start_time = time.time()
 
     while time.time() - start_time < timeout:
-
         try:
+            deployment = apps_api.read_namespaced_deployment(
+                name=deployment_name,
+                namespace=NAMESPACE
+            )
 
-            deployment = (
-                apps_api.read_namespaced_deployment(
-                    name=deployment_name,
-                    namespace=NAMESPACE
+            generation = deployment.metadata.generation or 0
+            observed = deployment.status.observed_generation or 0
+            desired = deployment.spec.replicas or 0
+            ready = deployment.status.ready_replicas or 0
+            updated = deployment.status.updated_replicas or 0
+            available = deployment.status.available_replicas or 0
+
+            generation_ok = (
+                observed >= generation
+                and (
+                    expected_generation is None
+                    or generation >= expected_generation
                 )
             )
 
-            desired = (
-                deployment.spec.replicas or 0
-            )
-
-            ready = (
-                deployment.status.ready_replicas or 0
-            )
-
-            updated = (
-                deployment.status.updated_replicas or 0
-            )
-
-            available = (
-                deployment.status.available_replicas or 0
-            )
-
             print(
-                f"Recovery status: "
-                f"ready={ready}/{desired}, "
-                f"updated={updated}, "
-                f"available={available}"
+                f"Recovery status: generation={generation}, "
+                f"observed={observed}, ready={ready}/{desired}, "
+                f"updated={updated}, available={available}"
             )
 
             if (
                 desired > 0
+                and generation_ok
                 and ready == desired
                 and updated == desired
                 and available == desired
             ):
-
-                print(
-                    "✅ Recovery successful"
-                )
-
+                print("Recovery successful")
                 return True
 
         except Exception as e:
-
-            print(
-                f"⚠️ Recovery check error: {e}"
-            )
+            print(f"Recovery check error: {e}")
 
         time.sleep(2)
 
-    print(
-        "❌ Recovery failed or timed out"
+    print("Recovery failed or timed out")
+    return False
+
+
+# ============================================================
+# INDEPENDENT SERVICE HEALTH GATE
+# ============================================================
+
+def check_service_health(deployment_name):
+    """
+    Return (healthy, reason).
+
+    A service is healthy only when its HTTP health endpoint responds
+    successfully and the Deployment's desired replicas are ready.
+    This check does not trigger a restart.
+    """
+    health_url = os.getenv(
+        "USER_SERVICE_HEALTH_URL",
+        "http://localhost:31478/health"
     )
 
-    return False
+    try:
+        request = urllib.request.Request(
+            health_url,
+            headers={"Accept": "application/json"},
+            method="GET"
+        )
+
+        with urllib.request.urlopen(request, timeout=3) as response:
+            if response.status != 200:
+                return False, f"HTTP health endpoint returned {response.status}"
+
+    except Exception as exc:
+        return False, f"HTTP health check failed: {exc}"
+
+    try:
+        deployment = apps_api.read_namespaced_deployment(
+            name=deployment_name,
+            namespace=NAMESPACE
+        )
+
+        desired = deployment.spec.replicas or 0
+        status = deployment.status
+
+        observed = status.observed_generation or 0
+        generation = deployment.metadata.generation or 0
+        ready = status.ready_replicas or 0
+        available = status.available_replicas or 0
+        updated = status.updated_replicas or 0
+
+        if desired <= 0:
+            return False, "Deployment has no desired replicas"
+
+        if observed < generation:
+            return False, "Deployment controller has not observed the latest generation"
+
+        if not (
+            ready == desired
+            and available == desired
+            and updated == desired
+        ):
+            return False, (
+                f"Deployment not fully ready: "
+                f"ready={ready}/{desired}, "
+                f"available={available}/{desired}, "
+                f"updated={updated}/{desired}"
+            )
+
+        return True, "HTTP health endpoint and Deployment readiness are healthy"
+
+    except Exception as exc:
+        return False, f"Kubernetes health check failed: {exc}"
+
 
 
 # ============================================================
@@ -263,13 +323,13 @@ for name, query in queries.items():
             ]
 
             print(
-                f"✅ {name}: {len(data[name])} samples"
+                f"[OK] {name}: {len(data[name])} samples"
             )
         else:
-            print(f"⚠️ {name}: no data")
+            print(f"[WARNING] {name}: no data")
 
     except Exception as e:
-        print(f"❌ {name}: {e}")
+        print(f"[ERROR] {name}: {e}")
 
 
 # ============================================================
@@ -278,7 +338,7 @@ for name, query in queries.items():
 
 if not data or any(not values for values in data.values()):
     message = "One or more Prometheus metrics contain no samples."
-    print(f"❌ {message}")
+    print(f"[ERROR] {message}")
     log_event("ERROR", message)
     raise SystemExit(1)
 
@@ -304,7 +364,7 @@ aligned_data = pd.concat(
 
 if aligned_data.empty:
     message = "No shared timestamps across Prometheus metrics."
-    print(f"❌ {message}")
+    print(f"[ERROR] {message}")
     log_event("ERROR", message)
     raise SystemExit(1)
 
@@ -312,7 +372,7 @@ if aligned_data.empty:
 df = aligned_data.reset_index(drop=True)
 
 print()
-print(f"✅ Aligned samples: {len(df)}")
+print(f"[OK] Aligned samples: {len(df)}")
 print(df.head())
 
 # ============================================================
@@ -326,7 +386,7 @@ missing_features = [
 
 if missing_features:
     message = f"Missing features: {missing_features}"
-    print(f"❌ {message}")
+    print(f"[ERROR] {message}")
     log_event("ERROR", message)
     raise SystemExit(1)
 
@@ -356,7 +416,7 @@ try:
 except Exception as e:
 
     print(
-        f"❌ Could not load model: {e}"
+        f"[ERROR] Could not load model: {e}"
     )
 
     log_event(
@@ -439,52 +499,114 @@ print("SELF-HEALING DECISION")
 print("=" * 60)
 
 if anomaly_count >= REQUIRED_ANOMALIES:
-    print("🚨 CONFIRMED ANOMALY")
+    print("CONFIRMED ANOMALY")
 
     log_event(
         "ANOMALY_DETECTED",
         f"Isolation Forest detected {REQUIRED_ANOMALIES} consecutive anomalies"
     )
 
-    if DRY_RUN:
-        print(
-            f"🛡️ DRY RUN: would restart "
-            f"{SERVICE_NAME} deployment; no restart performed."
-        )
+    healthy, health_reason = check_service_health(SERVICE_NAME)
+    print(f"Independent health check: {health_reason}")
+
+    if healthy:
+        print("Service is healthy; restart suppressed.")
         log_event(
-            "DRY_RUN",
-            f"Would restart {SERVICE_NAME} deployment"
+            "RESTART_SUPPRESSED_HEALTHY",
+            health_reason
         )
+
     else:
-        try:
-            restart_service(SERVICE_NAME)
-            log_event(
-                "SELF_HEALING_TRIGGERED",
-                f"Restarted {SERVICE_NAME} deployment"
-            )
-        except Exception as e:
-            print(f"❌ Self-healing failed: {e}")
-            log_event("SELF_HEALING_FAILED", str(e))
-            raise SystemExit(1)
+        print("Service health is not confirmed.")
+        print("No automatic restart will be performed.")
 
-        recovered = verify_recovery(SERVICE_NAME)
+        log_event(
+            "HEALTH_CHECK_FAILED",
+            health_reason
+        )
 
-        if recovered:
+        if DRY_RUN or not RECOVERY_APPROVED:
             log_event(
-                "RECOVERY_SUCCESS",
-                f"{SERVICE_NAME} deployment recovered successfully"
+                "DRY_RUN_UNHEALTHY",
+                f"Potential recovery identified for {SERVICE_NAME}; "
+                f"manual review required. Reason: {health_reason}"
             )
-            print("✅ Self-healing and recovery completed successfully")
+            print("DRY RUN: potential recovery recorded for manual review.")
+
         else:
             log_event(
-                "RECOVERY_FAILED",
-                f"{SERVICE_NAME} did not recover within timeout"
+                "RECOVERY_ATTEMPTED",
+                f"Restart requested for {SERVICE_NAME}. "
+                f"Health check reason: {health_reason}"
             )
-            print("❌ Self-healing recovery failed")
-else:
-    print("✅ No self-healing action required")
-    log_event("SYSTEM_NORMAL", "No self-healing action required")
 
+            try:
+                # Capture the generation before requesting a restart.
+                before = apps_api.read_namespaced_deployment(
+                    name=SERVICE_NAME,
+                    namespace=NAMESPACE
+                )
+                previous_generation = before.metadata.generation or 0
+
+                restart_service(SERVICE_NAME)
+
+                # Wait until Kubernetes has registered the updated template.
+                updated_generation = None
+                generation_deadline = time.time() + 10
+
+                while time.time() < generation_deadline:
+                    current = apps_api.read_namespaced_deployment(
+                        name=SERVICE_NAME,
+                        namespace=NAMESPACE
+                    )
+                    current_generation = current.metadata.generation or 0
+
+                    if current_generation > previous_generation:
+                        updated_generation = current_generation
+                        break
+
+                    time.sleep(1)
+
+                if updated_generation is None:
+                    log_event(
+                        "RECOVERY_FAILED",
+                        f"Deployment generation did not advance for "
+                        f"{SERVICE_NAME}"
+                    )
+                    print("Recovery failed: Deployment generation did not advance.")
+
+                elif verify_recovery(
+                    SERVICE_NAME,
+                    expected_generation=updated_generation
+                ):
+                    log_event(
+                        "RECOVERY_SUCCEEDED",
+                        f"{SERVICE_NAME} rollout verified at generation "
+                        f"{updated_generation}"
+                    )
+                    print("Recovery succeeded and rollout was verified.")
+
+                else:
+                    log_event(
+                        "RECOVERY_FAILED",
+                        f"Rollout verification failed for {SERVICE_NAME} "
+                        f"at generation {updated_generation}"
+                    )
+                    print("Recovery failed: rollout verification did not succeed.")
+
+            except Exception as exc:
+                log_event(
+                    "RECOVERY_FAILED",
+                    f"{SERVICE_NAME}: {exc}"
+                )
+                print(f"Recovery failed: {exc}")
+
+else:
+    print("No consecutive anomaly threshold reached.")
+    log_event(
+        "SYSTEM_NORMAL",
+        "No consecutive anomaly threshold reached"
+    )
 
 # ============================================================
 # COMPLETE
