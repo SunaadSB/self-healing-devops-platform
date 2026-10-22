@@ -1,0 +1,528 @@
+{
+    "schemaVersion":  39,
+    "version":  2,
+    "panels":  [
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "thresholds":  {
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "value":  null,
+                                                                                                 "color":  "green"
+                                                                                             },
+                                                                                             {
+                                                                                                 "value":  0.01,
+                                                                                                 "color":  "red"
+                                                                                             }
+                                                                                         ],
+                                                                               "mode":  "absolute"
+                                                                           },
+                                                            "mappings":  [
+                                                                             {
+                                                                                 "options":  {
+                                                                                                 "0":  {
+                                                                                                           "color":  "red",
+                                                                                                           "text":  "DOWN",
+                                                                                                           "index":  1
+                                                                                                       },
+                                                                                                 "1":  {
+                                                                                                           "color":  "green",
+                                                                                                           "text":  "UP",
+                                                                                                           "index":  0
+                                                                                                       }
+                                                                                             },
+                                                                                 "type":  "value"
+                                                                             }
+                                                                         ],
+                                                            "color":  {
+                                                                          "mode":  "thresholds"
+                                                                      },
+                                                            "decimals":  2,
+                                                            "unit":  "percentunit"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  1,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  12,
+                                       "h":  5,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Service Availability",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{job}}",
+                                           "expr":  "min by (job) (up{job=~\"ai-self-healing-.*\"})",
+                                           "refId":  "A",
+                                           "range":  false
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "textMode":  "value_and_name",
+                                       "graphMode":  "area",
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "justifyMode":  "center",
+                                       "orientation":  "horizontal",
+                                       "colorMode":  "value"
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "color":  {
+                                                                          "mode":  "thresholds"
+                                                                      },
+                                                            "decimals":  2,
+                                                            "thresholds":  {
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "value":  null,
+                                                                                                 "color":  "green"
+                                                                                             },
+                                                                                             {
+                                                                                                 "value":  0.01,
+                                                                                                 "color":  "red"
+                                                                                             }
+                                                                                         ],
+                                                                               "mode":  "absolute"
+                                                                           },
+                                                            "unit":  "percent",
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  2,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  6,
+                                       "h":  5,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "HTTP Error Rate",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "Errors",
+                                           "expr":  "100 * (sum(rate(http_requests_total{status=~\"4..|5..\",job=~\"ai-self-healing-.*\"}[5m])) or vector(0)) / clamp_min(sum(rate(http_requests_total{job=~\"ai-self-healing-.*\"}[5m])), 1e-9)",
+                                           "refId":  "A",
+                                           "range":  false
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "textMode":  "value_and_name",
+                                       "graphMode":  "area",
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "justifyMode":  "center",
+                                       "orientation":  "horizontal",
+                                       "colorMode":  "value"
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "color":  {
+                                                                          "mode":  "thresholds"
+                                                                      },
+                                                            "decimals":  2,
+                                                            "thresholds":  {
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "value":  null,
+                                                                                                 "color":  "green"
+                                                                                             },
+                                                                                             {
+                                                                                                 "value":  0.01,
+                                                                                                 "color":  "red"
+                                                                                             }
+                                                                                         ],
+                                                                               "mode":  "absolute"
+                                                                           },
+                                                            "unit":  "reqps",
+                                                            "mappings":  [
+
+                                                                         ]
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  3,
+                       "gridPos":  {
+                                       "y":  0,
+                                       "w":  6,
+                                       "h":  5,
+                                       "x":  18
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Request Rate",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{service}}",
+                                           "expr":  "sum by (service) (rate(http_requests_total{service=~\"user-service|order-service|payment-service\"}[5m]))",
+                                           "refId":  "A",
+                                           "range":  false
+                                       }
+                                   ],
+                       "type":  "stat",
+                       "options":  {
+                                       "textMode":  "value_and_name",
+                                       "graphMode":  "area",
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "justifyMode":  "center",
+                                       "orientation":  "horizontal",
+                                       "colorMode":  "value"
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "fillOpacity":  0,
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "showPoints":  "never",
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2
+                                                                       },
+                                                            "unit":  "reqps"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  4,
+                       "gridPos":  {
+                                       "y":  5,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Request Rate by Service",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{service}}",
+                                           "expr":  "sum by (service) (rate(http_requests_total{service=~\"user-service|order-service|payment-service\"}[5m]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "displayMode":  "list"
+                                                  },
+                                       "tooltip":  {
+                                                       "sort":  "desc",
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "fillOpacity":  0,
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "showPoints":  "never",
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2
+                                                                       },
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  5,
+                       "gridPos":  {
+                                       "y":  5,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "HTTP Request Latency (p50 / p95 / p99)",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{service}} p50",
+                                           "expr":  "histogram_quantile(0.50, sum by (le, service) (rate(http_request_duration_seconds_bucket{service=~\"user-service|order-service|payment-service\"}[5m])))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       },
+                                       {
+                                           "legendFormat":  "{{service}} p95",
+                                           "expr":  "histogram_quantile(0.95, sum by (le, service) (rate(http_request_duration_seconds_bucket{service=~\"user-service|order-service|payment-service\"}[5m])))",
+                                           "refId":  "B",
+                                           "range":  true
+                                       },
+                                       {
+                                           "legendFormat":  "{{service}} p99",
+                                           "expr":  "histogram_quantile(0.99, sum by (le, service) (rate(http_request_duration_seconds_bucket{service=~\"user-service|order-service|payment-service\"}[5m])))",
+                                           "refId":  "C",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "displayMode":  "list"
+                                                  },
+                                       "tooltip":  {
+                                                       "sort":  "desc",
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "fillOpacity":  0,
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "showPoints":  "never",
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2
+                                                                       },
+                                                            "unit":  "percent"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  6,
+                       "gridPos":  {
+                                       "y":  13,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "HTTP Error Rate by Service",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{service}}",
+                                           "expr":  "100 * (sum by (service) (rate(http_requests_total{status=~\"4..|5..\",job=~\"ai-self-healing-.*\"}[5m])) or (0 * sum by (service) (rate(http_requests_total{job=~\"ai-self-healing-.*\"}[5m])))) / clamp_min(sum by (service) (rate(http_requests_total{job=~\"ai-self-healing-.*\"}[5m])), 1e-9)",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "displayMode":  "list"
+                                                  },
+                                       "tooltip":  {
+                                                       "sort":  "desc",
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "fillOpacity":  0,
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "showPoints":  "never",
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2
+                                                                       },
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  7,
+                       "gridPos":  {
+                                       "y":  13,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Downstream Dependency Latency (p95)",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{dependency}} / {{operation}}",
+                                           "expr":  "histogram_quantile(0.95, sum by (le, dependency, operation) (rate(downstream_request_duration_seconds_bucket[5m])))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "displayMode":  "list"
+                                                  },
+                                       "tooltip":  {
+                                                       "sort":  "desc",
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "fillOpacity":  0,
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "showPoints":  "never",
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2
+                                                                       },
+                                                            "unit":  "ops"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  8,
+                       "gridPos":  {
+                                       "y":  21,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  0
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Order Outcomes per Second",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{outcome}}",
+                                           "expr":  "sum by (outcome) (rate(order_outcomes_total[5m]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "displayMode":  "list"
+                                                  },
+                                       "tooltip":  {
+                                                       "sort":  "desc",
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   },
+                   {
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "fillOpacity":  0,
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "showPoints":  "never",
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2
+                                                                       },
+                                                            "unit":  "ops"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "id":  9,
+                       "gridPos":  {
+                                       "y":  21,
+                                       "w":  12,
+                                       "h":  8,
+                                       "x":  12
+                                   },
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "title":  "Payment Outcomes per Second",
+                       "targets":  [
+                                       {
+                                           "legendFormat":  "{{outcome}}",
+                                           "expr":  "sum by (outcome) (rate(payment_outcomes_total[5m]))",
+                                           "refId":  "A",
+                                           "range":  true
+                                       }
+                                   ],
+                       "type":  "timeseries",
+                       "options":  {
+                                       "legend":  {
+                                                      "placement":  "bottom",
+                                                      "displayMode":  "list"
+                                                  },
+                                       "tooltip":  {
+                                                       "sort":  "desc",
+                                                       "mode":  "multi"
+                                                   }
+                                   }
+                   }
+               ],
+    "tags":  [
+                 "self-healing",
+                 "prometheus",
+                 "kubernetes"
+             ],
+    "time":  {
+                 "to":  "now",
+                 "from":  "now-1h"
+             },
+    "timezone":  "browser",
+    "refresh":  "15s",
+    "title":  "AI Self-Healing Platform Overview",
+    "uid":  "ai-self-healing-overview"
+}

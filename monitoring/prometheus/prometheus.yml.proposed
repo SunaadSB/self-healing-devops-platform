@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # Existing targets in the default namespace ? preserved.
+  - job_name: "user-service"
+    static_configs:
+      - targets: ["user-service:8000"]
+
+  - job_name: "order-service"
+    static_configs:
+      - targets: ["order-service:8001"]
+
+  - job_name: "payment-service"
+    static_configs:
+      - targets: ["payment-service:8002"]
+
+  # New services in the ai-self-healing namespace.
+  - job_name: "ai-self-healing-user-service"
+    static_configs:
+      - targets: ["user-service.ai-self-healing.svc.cluster.local:8000"]
+
+  - job_name: "ai-self-healing-order-service"
+    static_configs:
+      - targets: ["order-service.ai-self-healing.svc.cluster.local:8000"]
+
+  - job_name: "ai-self-healing-payment-service"
+    static_configs:
+      - targets: ["payment-service.ai-self-healing.svc.cluster.local:8000"]

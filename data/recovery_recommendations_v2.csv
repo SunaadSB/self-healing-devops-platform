@@ -1,0 +1,1 @@
+timestamp,service,recommendation,status,reason,consecutive_anomalies,anomaly_score,request_rate,error_ratio,p95_latency_seconds,cooldown_minutes

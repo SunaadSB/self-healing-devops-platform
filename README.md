@@ -1,46 +1,71 @@
-# Self-Healing DevOps Platform
+# AI-Powered Self-Healing DevOps Platform
 
-A demo platform with three FastAPI services, an API gateway, Prometheus metrics, Kubernetes manifests, and an AI anomaly detector.
+A guarded DevOps prototype that collects service metrics, detects anomalous behavior, and produces **advisory-only** recovery recommendations. The recommendation pipeline does not execute recovery actions.
 
-## Local service ports
+## Services
 
-The service containers listen on their internal ports; Docker Compose publishes them on the host ports below so they match the API gateway and the standalone Prometheus configuration.
+- User Service
+- Order Service
+- Payment Service
 
-| Component | Host port | Container port |
-|---|---:|---:|
-| API gateway (run separately) | 8000 | — |
-| User service | 8001 | 8000 |
-| Order service | 8002 | 8001 |
-| Payment service | 8003 | 8002 |
+## Architecture
 
-## Run the services locally with Docker Compose
+- Python and FastAPI service components
+- Docker and Kubernetes deployment environment
+- Prometheus metrics and Grafana dashboards
+- Per-service scikit-learn Isolation Forest anomaly detection
+- Recommendation engine and guarded recovery controller
 
-From the repository root:
+## Current workflow
 
-```bash
-docker compose up --build
+1. Collect or prepare a metrics CSV dataset.
+2. Validate the dataset before model training or scoring.
+3. Run anomaly detection to produce an anomaly-report CSV and model artifacts.
+4. Feed the anomaly report to the decision engine.
+5. Review the recommendation CSV; no automated recovery is performed by this pipeline.
+
+### Run the advisory pipeline
+
+Use an isolated model directory and new output filenames. The runner refuses to overwrite existing report/recommendation files, refuses to use a non-empty model directory, and rejects path collisions.
+
+```powershell
+.\.venv-ml\Scripts\python.exe .\scripts\run_advisory_pipeline.py `
+  --dataset .\data\metrics_dataset_v2.csv `
+  --model-dir .\ml\models_stage6_run `
+  --report .\data\anomaly_report_stage6_run.csv `
+  --recommendations .\data\recommendations_stage6_run.csv
 ```
 
-The Compose file starts the user, order, and payment services. To run the gateway separately, install its Python dependencies and start it from the repository root:
+Use paths that do not already exist for the report and recommendations. The model directory must be empty or absent. The ML environment needs the project's installed dependencies, including pandas, scikit-learn, and joblib.
 
-```bash
-python -m pip install fastapi uvicorn requests
-python -m uvicorn main:app --app-dir api-gateway --host 0.0.0.0 --port 8000
+### Decision-engine behavior
+
+- Only `user-service`, `order-service`, and `payment-service` are considered.
+- A recommendation requires three consecutive anomaly records for a service, with no gap greater than 90 seconds.
+- A ten-minute cooldown limits repeat recommendations per service.
+- Output status is `advisory_only`; the engine does not call `kubectl` or restart services.
+
+## Safety
+
+- The end-to-end pipeline is advisory-only.
+- Do not enable live recovery without a separate, reviewed authorization and safety procedure.
+- Use fresh output paths and retain existing datasets, models, and reports as evidence.
+- Test against synthetic or copied data before using newly collected production-like telemetry.
+
+## Tests
+
+Run the regression suite from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest .\tests -q
 ```
 
-The gateway's default upstream URLs target the published host ports: user `127.0.0.1:8001`, order `127.0.0.1:8002`, and payment `127.0.0.1:8003`. This default is for running the gateway on the host; if you containerize the gateway, change the upstream URLs to the Compose service names and container ports.
+The suite includes service, metrics-collection, dataset-validation, decision-engine, and recovery-safety tests. The advisory-pipeline regression test verifies that an anomaly report is passed to the decision engine and produces an advisory recommendation without invoking recovery.
 
-## Prometheus configuration
+## Known telemetry limitation
 
-- `monitoring/prometheus.yml` is for a Prometheus process running on the same host as the Compose-published service ports. It scrapes `localhost:8001`, `localhost:8002`, and `localhost:8003`.
-- `monitoring/prometheus-config.yaml` is for Kubernetes and scrapes the Kubernetes service DNS names on their service ports.
+The current checked-in `metrics_dataset_v2.csv` snapshot was previously observed with `error_ratio` equal to zero in every row. This does not by itself establish whether the cause is instrumentation, Prometheus query configuration, or the absence of error responses. Verify the metrics query and telemetry source before using error ratio as a meaningful anomaly feature. No deliberate error traffic should be generated without explicit approval.
 
-The detector and dashboard both accept a `PROMETHEUS_URL` environment variable so the endpoint can be set for the environment where each process runs. The detector defaults to `http://localhost:9090`; the dashboard defaults to `http://localhost:30090` (the NodePort exposed by the Kubernetes Prometheus manifest). For example, set `PROMETHEUS_URL` to the actual Prometheus address before launching either process. These defaults assume the process can reach Prometheus through localhost; a container should use a reachable service name or host address instead.
+## Validation status
 
-## Kubernetes
-
-Apply the manifests in `k8s/` and the Prometheus manifests in `monitoring/` to a configured Kubernetes cluster. Ensure the service images have been built and loaded into the cluster or pushed to a registry before applying deployments that use `imagePullPolicy: Never`.
-
-## Important note
-
-This repository is a demonstration, not a production-ready payment or self-healing system. Validate deployment settings, monitoring connectivity, and recovery behavior in a test environment before using autonomous recovery.
+Record test results and telemetry findings with the date and environment in which they were verified. A successful test suite does not establish that live Prometheus instrumentation or Kubernetes recovery behavior has been validated.
