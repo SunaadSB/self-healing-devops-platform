@@ -1,8 +1,8 @@
 # AI-Powered Self-Healing DevOps Platform
 
-A Python-based DevOps monitoring and anomaly-detection prototype designed to demonstrate how service telemetry can be used to identify unusual behavior, generate recovery recommendations, and give operators a single place to inspect service and recovery status.
+A machine-learning-focused observability project that explores how service telemetry can be transformed into anomaly signals and actionable operator guidance. The core ML workflow validates metrics data, applies **scikit-learn Isolation Forest** anomaly detection, produces a structured anomaly report, and passes the results to a recommendation layer.
 
-The example application contains three services—**User**, **Order**, and **Payment**—with Prometheus-oriented observability, an ML-based anomaly detector, a recommendation engine, a guarded recovery layer, and a local dashboard.
+The example application contains three services—**User**, **Order**, and **Payment**—with Prometheus-oriented observability, a Python data/ML pipeline, an advisory decision engine, guarded recovery components, and a local dashboard. The project is relevant to roles involving **machine learning engineering, applied ML, anomaly detection, data preprocessing, and ML-enabled operations**.
 
 > [!IMPORTANT]
 > **Safety boundary:** the documented pipeline is advisory-only and the dashboard is read-only. An anomaly prediction is not a confirmed incident, and a recommendation is not proof that an action is safe. Keep live recovery execution disabled unless a separate authorization, testing, rollback, and operational-review process explicitly approves it.
@@ -12,6 +12,7 @@ The example application contains three services—**User**, **Order**, and **Pay
 - [Goals](#goals)
 - [Features](#features)
 - [Architecture](#architecture)
+- [Machine learning approach](#machine-learning-approach)
 - [End-to-end workflow](#end-to-end-workflow)
 - [Repository structure](#repository-structure)
 - [Requirements](#requirements)
@@ -28,20 +29,21 @@ The example application contains three services—**User**, **Order**, and **Pay
 
 ## Goals
 
-1. Demonstrate a practical monitoring-to-diagnosis workflow for a small microservice application.
-2. Validate service-metric data before using it for anomaly detection.
-3. Use Isolation Forest models to flag observations that differ from learned metric patterns.
-4. Convert anomaly reports into operator-facing recommendations.
-5. expose service health, telemetry summaries, pipeline information, and recovery audit data through a local dashboard.
-6. Establish a guarded recovery architecture where actions can be evaluated and audited without assuming that every recommendation should be executed automatically.
+1. Build an end-to-end applied ML workflow around service telemetry and operational metrics.
+2. Validate and prepare metrics data before model inference.
+3. Apply Isolation Forest models to identify observations that differ from learned metric patterns.
+4. Convert model output into a structured anomaly report that can be reviewed and consumed downstream.
+5. Connect ML outputs to a decision-support layer without confusing predictions with verified incidents.
+6. Present model and service context through a dashboard and retain a guarded, auditable recovery boundary.
 
 ## Features
 
 - **Microservices:** User, Order, and Payment services built with Python/FastAPI.
 - **Metrics and monitoring:** Prometheus-oriented metrics collection and query configuration.
-- **Input validation:** checks and preparation for metrics datasets before model scoring.
-- **Anomaly detection:** per-service scikit-learn Isolation Forest workflow.
-- **Advisory decision engine:** transforms anomaly-report records into recommendations for human review.
+- **ML data pipeline:** metrics dataset validation and preparation before scoring.
+- **Unsupervised anomaly detection:** per-service scikit-learn Isolation Forest workflow for identifying unusual metric patterns without requiring incident labels at inference time.
+- **Structured model outputs:** anomaly-report CSV and saved model artifacts for downstream inspection.
+- **ML-to-decision integration:** transforms anomaly-report records into recommendations for human review.
 - **Guarded recovery components:** controller and recovery-metrics code for representing recovery-related state and audit information.
 - **Read-only dashboard:** a local FastAPI application and static interface for inspecting health, metrics, anomaly summaries, pipeline state, and recovery records.
 - **Deployment configuration:** Kubernetes manifests and monitoring configuration for a demonstration environment.
@@ -73,16 +75,64 @@ The main logical components are:
 
 The exact components available at runtime depend on the environment and which optional infrastructure has been started.
 
+## Machine learning approach
+
+The machine-learning component is the analytical core of the project. It uses operational metrics as input and produces anomaly signals that can be inspected by downstream decision logic and a human operator.
+
+### Problem framing
+
+Service telemetry is time-varying and can exhibit unusual combinations of metric values before or during a service degradation. In a practical monitoring environment, labeled examples of every possible incident may be limited. This project therefore demonstrates an **unsupervised anomaly-detection** approach rather than claiming to be a supervised incident classifier.
+
+### Model: Isolation Forest
+
+The detector uses the Isolation Forest algorithm available in scikit-learn. Isolation Forest identifies observations that are easier to isolate from the rest of the data and can be used to flag unusual metric patterns.
+
+At a high level, the workflow is:
+
+1. Load the selected metrics dataset.
+2. Validate the input and prepare the metric records for scoring.
+3. Apply the configured feature selection and service grouping used by the detector.
+4. Fit or use the Isolation Forest model according to the implementation and run configuration.
+5. Generate anomaly predictions/scores and write the resulting report.
+6. Pass report records to the advisory decision engine.
+
+The exact feature columns, estimator parameters, contamination setting, and artifact format should be taken from the current implementation and configuration; they are not fixed by this overview. The repository does not claim a particular precision, recall, F1 score, or production detection rate without a labeled evaluation.
+
+### ML pipeline stages
+
+| Stage | Purpose | Result |
+|---|---|---|
+| Data ingestion | Load the selected metrics CSV or prepared telemetry dataset | Input records |
+| Data validation | Check input availability and suitability for processing | Validated/prepared data or an actionable failure |
+| Feature preparation | Select and organize the metric fields used by the detector | Model-ready feature data |
+| Anomaly detection | Apply the configured Isolation Forest workflow | Anomaly labels/scores as supported by the implementation |
+| Report generation | Persist the detector output | Anomaly-report CSV and model artifacts |
+| Decision support | Interpret report entries using downstream rules | Advisory recommendations |
+| Human review | Check metric context and service behavior | Operator decision; not automatic proof of an incident |
+
+### Data and evaluation considerations
+
+- **Feature quality matters:** metric names, units, missing values, service labels, and sampling intervals affect the usefulness of model output.
+- **Service context matters:** different services can have different traffic and latency baselines, so grouping and feature choices should be reviewed rather than assumed interchangeable.
+- **Anomaly flags are not labels:** an unusual observation may be benign, and an incident may not always appear as a statistical outlier.
+- **Evaluation needs ground truth:** to measure precision, recall, F1, false-positive rate, or detection delay, build or obtain a labeled validation dataset and document the evaluation protocol.
+- **Reproducibility matters:** record the dataset version, feature set, model parameters, and output artifact paths for each experiment.
+- **No performance claims are implied:** this README does not assert benchmark scores or production readiness without measured evidence.
+
+### Skills demonstrated
+
+This project can be discussed as experience with Python-based data/ML workflows, metrics data validation, unsupervised anomaly detection, scikit-learn, model artifact handling, structured inference outputs, pipeline integration, and communicating model signals to a downstream application. Be prepared to explain the actual implementation choices and their limitations in an interview.
+
 ## End-to-end workflow
 
-1. **Collect or prepare telemetry.** Obtain metrics from the configured services/monitoring stack or use a prepared CSV dataset.
-2. **Validate input data.** Check that the dataset is present and suitable for the pipeline before scoring it.
-3. **Detect anomalies.** Run the anomaly detector against the configured metric features and service groupings.
-4. **Write an anomaly report.** Store the detector output at the selected report path for inspection and downstream processing.
-5. **Generate recommendations.** The decision engine reads the report and writes advisory recommendations.
-6. **Review the evidence.** An operator checks the metrics, report rows, and service context rather than treating a model flag as a confirmed incident.
-7. **Inspect dashboard and audit information.** Use the local dashboard to view the data available from configured integrations and recovery-related records.
-8. **Authorize any real action separately.** This repository’s advisory example does not make recommendations equivalent to executed or successful recovery actions.
+1. **Collect telemetry or load a dataset.** Obtain metrics from configured services/monitoring or a prepared CSV file.
+2. **Validate and prepare data.** Check the input and prepare the metric records for model processing.
+3. **Run the ML detector.** Apply the configured Isolation Forest workflow to the selected features and service groupings.
+4. **Persist model outputs.** Write an anomaly report and model artifacts to the selected paths.
+5. **Generate recommendations.** The decision engine consumes the report and writes advisory recommendations.
+6. **Review model signals.** An operator checks the metric context and service behavior before deciding whether a flag is meaningful.
+7. **Inspect dashboard and audit information.** Use the dashboard to review available telemetry and recovery-related records.
+8. **Keep actions separately authorized.** A model prediction or recommendation is not equivalent to an executed or successful recovery action.
 
 ## Repository structure
 
