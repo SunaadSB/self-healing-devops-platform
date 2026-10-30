@@ -1,0 +1,140 @@
+{
+  "version": "V3",
+  "method": "Chronological 60/20/20 split; per-service Isolation Forest; robust median/MAD features; validation-selected threshold",
+  "overall_test_metrics": {
+    "samples": 510,
+    "TN": 237,
+    "FP": 18,
+    "FN": 82,
+    "TP": 173,
+    "accuracy_percent": 80.39,
+    "precision_percent": 90.58,
+    "recall_percent": 67.84,
+    "f1_percent": 77.58,
+    "false_positive_rate_percent": 7.06
+  },
+  "per_service": [
+    {
+      "service": "order-service",
+      "train_rows": 252,
+      "validation_rows": 84,
+      "test_rows": 84,
+      "threshold": -0.20550475335462737,
+      "samples": 168,
+      "TN": 84,
+      "FP": 0,
+      "FN": 28,
+      "TP": 56,
+      "accuracy_percent": 83.33,
+      "precision_percent": 100.0,
+      "recall_percent": 66.67,
+      "f1_percent": 80.0,
+      "false_positive_rate_percent": 0.0
+    },
+    {
+      "service": "payment-service",
+      "train_rows": 252,
+      "validation_rows": 84,
+      "test_rows": 84,
+      "threshold": -0.18841453815346396,
+      "samples": 168,
+      "TN": 83,
+      "FP": 1,
+      "FN": 30,
+      "TP": 54,
+      "accuracy_percent": 81.55,
+      "precision_percent": 98.18,
+      "recall_percent": 64.29,
+      "f1_percent": 77.7,
+      "false_positive_rate_percent": 1.19
+    },
+    {
+      "service": "user-service",
+      "train_rows": 258,
+      "validation_rows": 86,
+      "test_rows": 87,
+      "threshold": -0.09835966668213518,
+      "samples": 174,
+      "TN": 70,
+      "FP": 17,
+      "FN": 24,
+      "TP": 63,
+      "accuracy_percent": 76.44,
+      "precision_percent": 78.75,
+      "recall_percent": 72.41,
+      "f1_percent": 75.45,
+      "false_positive_rate_percent": 19.54
+    }
+  ],
+  "per_anomaly_type": [
+    {
+      "service": "order-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "service": "order-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 28,
+      "detected": 0,
+      "recall_percent": 0.0
+    },
+    {
+      "service": "order-service",
+      "anomaly_type": "latency_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "service": "payment-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "service": "payment-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 28,
+      "detected": 0,
+      "recall_percent": 0.0
+    },
+    {
+      "service": "payment-service",
+      "anomaly_type": "latency_spike",
+      "total": 28,
+      "detected": 26,
+      "recall_percent": 92.86
+    },
+    {
+      "service": "user-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 29,
+      "detected": 29,
+      "recall_percent": 100.0
+    },
+    {
+      "service": "user-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 29,
+      "detected": 5,
+      "recall_percent": 17.24
+    },
+    {
+      "service": "user-service",
+      "anomaly_type": "latency_spike",
+      "total": 29,
+      "detected": 29,
+      "recall_percent": 100.0
+    }
+  ],
+  "limitations": [
+    "Original held-out observations are assumed normal, not independently verified.",
+    "Injected anomalies are synthetic and do not represent confirmed incidents.",
+    "error_ratio is constant in the source dataset; its injected spike is an artificial feature-shift test.",
+    "The benchmark score is not production accuracy."
+  ]
+}

@@ -90,7 +90,7 @@ function statusOf(o){
 }
 function pillClass(value){
   const s=String(value??"").toLowerCase();
-  if(/healthy|ready|success|passed|complete|completed|up|resolved|ok/.test(s))return "good";
+  if(/healthy|ready|success|passed|complete|completed|up|resolved|recovered|ok/.test(s))return "good";
   if(/fail|error|critical|down|unhealthy/.test(s))return "bad";
   if(/warn|pending|running|unknown|degraded|partial|skipped/.test(s))return "warn";
   return "";
@@ -340,19 +340,83 @@ function renderMetrics(data){
 }
 function renderAudit(data){
   const root=obj(data);
-  const candidates=[];
-  function scan(o,path,depth){
-    if(depth>3||!o||typeof o!=="object")return;
-    for(const [k,v] of Object.entries(o)){
-      if(/recover|authoriz|execut|approval|safety|audit|dry.?run/i.test(k)){
-        candidates.push([path?path+"."+k:k,v]);
-      }else if(v&&typeof v==="object"&&!Array.isArray(v))scan(v,path?path+"."+k:k,depth+1);
+  const overview=obj(root.overview);
+  const recovery=obj(overview.recovery);
+  const events=Array.isArray(overview.audit)?overview.audit:[];
+  const safe=[
+    ["Execution mode","Read-only dashboard; no recovery action is triggered"],
+    ["Authorization","Recovery execution requires backend authorization"],
+    ["Automatic remediation","Not invoked by this dashboard"]
+  ];
+
+  const summary=[
+    ["Recovery rate",recovery.status==="measured"
+      ?String(recovery.recovery_rate_percent??0)+"%"
+      :"Not yet measured"],
+    ["Verified successes",recovery.verified_successes??0],
+    ["Failed attempts",recovery.failed_attempts??0],
+    ["Unresolved attempts",recovery.unresolved_attempts??0],
+    ["Dry-run operations",recovery.dry_run_operations??0]
+  ];
+
+  const escValue=v=>{
+    if(v===null||v===undefined||v==="")return "Not recorded";
+    return esc(String(v));
+  };
+
+  const summaryHtml=summary.map(([k,v])=>
+    '<div class="item"><div class="itemhead"><span class="muted">'+
+    esc(k)+'</span><strong>'+escValue(v)+'</strong></div></div>'
+  ).join("");
+
+  const safetyHtml=safe.map(([k,v])=>
+    '<div class="item"><div class="itemhead"><span class="muted">'+
+    esc(k)+'</span><strong>'+esc(v)+'</strong></div></div>'
+  ).join("");
+
+  const eventHtml=events.slice(0,10).map(e=>{
+    e=obj(e);
+    const status=String(e.status??"unknown");
+    let statusClass=pillClass(status);
+    if(status.toLowerCase()==="recovered")statusClass="good";
+
+    let time=String(e.timestamp??"Not recorded");
+    const parsed=Date.parse(time);
+    if(Number.isFinite(parsed)){
+      time=new Date(parsed).toLocaleString()+" ("+
+        new Date(parsed).toISOString()+")";
     }
-  }
-  scan(root,"",0);
-  const safe=[["Execution mode","Read-only UI; no recovery action is triggered"],["Authorization","Backend controller must enforce explicit authorization"],["Automatic remediation","Not invoked by this dashboard"]];
-  const rows=safe.concat(candidates.slice(0,8));
-  $("audit").innerHTML=rows.map(([k,v])=>'<div class="item"><div class="itemhead"><span class="muted">'+esc(k)+'</span><strong>'+esc(typeof v==="object"?shortJson(v,250):v)+'</strong></div></div>').join("");
+
+    const fields=[
+      ["Service",e.service],
+      ["Action",e.action],
+      ["Mode",e.mode],
+      ["Timestamp",time],
+      ["Reason",e.reason],
+      ["Verification",e.verification],
+      ["Attempt ID",e.attempt_id]
+    ];
+
+    return '<div class="item" style="padding:14px;margin-bottom:10px">'+
+      '<div class="itemhead"><strong>'+escValue(e.service)+
+      '</strong><span class="pill '+statusClass+'">'+esc(status)+'</span></div>'+
+      fields.map(([k,v])=>
+        '<div class="itemhead" style="margin-top:8px;gap:12px">'+
+        '<span class="muted">'+esc(k)+'</span><span style="text-align:right;overflow-wrap:anywhere">'+
+        escValue(v)+'</span></div>'
+      ).join("")+
+      '</div>';
+  }).join("");
+
+  $("audit").innerHTML=
+    '<div class="itemhead"><strong>Recovery metrics</strong></div>'+
+    summaryHtml+
+    '<div class="itemhead" style="margin-top:18px"><strong>Safety controls</strong></div>'+
+    safetyHtml+
+    '<div class="itemhead" style="margin-top:18px"><strong>Recent recovery events</strong></div>'+
+    (eventHtml||empty("No recovery audit events are available."))+
+    '<p class="muted">Recovery rate excludes dry runs and unresolved attempts. '+
+    'Events are read from the backend audit log. This display does not execute recovery.</p>';
 }
 function renderDiagnostics(){
   $("apiTable").innerHTML=endpoints.map(([key,url])=>{

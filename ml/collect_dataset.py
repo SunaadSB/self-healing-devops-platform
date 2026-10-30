@@ -1,4 +1,4 @@
-﻿"""Collect timestamped Prometheus metrics into an append-only CSV."""
+"""Collect timestamped Prometheus metrics into an append-only CSV."""
 
 import argparse
 import csv

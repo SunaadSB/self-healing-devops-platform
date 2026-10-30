@@ -1,4 +1,4 @@
-﻿"""Calculate recovery effectiveness from the recovery audit log."""
+"""Calculate recovery effectiveness from the recovery audit log."""
 
 import json
 from pathlib import Path
@@ -43,8 +43,7 @@ def calculate_recovery_metrics(audit_path=DEFAULT_AUDIT_LOG):
         or record.get("status") == "dry_run"
     )
 
-    # New records are correlated by attempt_id. For each ID, the latest
-    # record is the current state; in_progress remains unresolved.
+    # Correlate modern records by attempt_id, retaining the latest state.
     correlated = {}
     legacy = []
 
@@ -55,15 +54,75 @@ def calculate_recovery_metrics(audit_path=DEFAULT_AUDIT_LOG):
         attempt_id = record.get("attempt_id")
         if isinstance(attempt_id, str) and attempt_id.strip():
             correlated[attempt_id] = record
-        elif record.get("status") != "in_progress":
-            # Legacy records have no stable correlation key. Retain their
-            # previous per-record behavior rather than guessing a pairing.
-            legacy.append(record)
         else:
-            # An uncorrelated intent is unresolved; do not discard it.
-            legacy.append(record)
+            legacy.append((index, record))
 
-    outcomes = list(correlated.values()) + legacy
+    # Legacy records have no attempt ID. Pair a start only with a later
+    # terminal record for the same service/action/namespace within 10 minutes.
+    consumed = set()
+    legacy_outcomes = []
+
+    for start_pos, (start_index, start) in enumerate(legacy):
+        if start.get("status") != "in_progress":
+            continue
+
+        start_time = start.get("timestamp") or start.get("started_at")
+        try:
+            from datetime import datetime
+            start_dt = datetime.fromisoformat(str(start_time).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            start_dt = None
+
+        if start_dt is None:
+            continue
+
+        identity = (
+            start.get("service"),
+            start.get("action"),
+            start.get("namespace"),
+        )
+
+        for end_index, end in legacy:
+            if end_index <= start_index or end_index in consumed:
+                continue
+            if end.get("status") not in SUCCESS_STATUSES | FAILURE_STATUSES:
+                continue
+            if (
+                end.get("service"),
+                end.get("action"),
+                end.get("namespace"),
+            ) != identity:
+                continue
+
+            end_time = end.get("timestamp") or end.get("completed_at")
+            try:
+                end_dt = datetime.fromisoformat(str(end_time).replace("Z", "+00:00"))
+            except (TypeError, ValueError):
+                continue
+
+            # Normalize naive timestamps to UTC only for comparison.
+            from datetime import timezone
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=timezone.utc)
+            if end_dt.tzinfo is None:
+                end_dt = end_dt.replace(tzinfo=timezone.utc)
+
+            elapsed = (end_dt - start_dt).total_seconds()
+            if 0 <= elapsed <= 600:
+                consumed.add(start_index)
+                consumed.add(end_index)
+                legacy_outcomes.append(end)
+                break
+
+    for index, record in legacy:
+        if index in consumed:
+            continue
+        if record.get("status") != "in_progress":
+            legacy_outcomes.append(record)
+        else:
+            legacy_outcomes.append(record)
+
+    outcomes = list(correlated.values()) + legacy_outcomes
 
     successes = sum(
         1 for record in outcomes

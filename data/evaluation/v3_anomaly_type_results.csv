@@ -1,0 +1,10 @@
+service,anomaly_type,total,detected,recall_percent
+order-service,request_rate_spike,28,28,100.0
+order-service,error_ratio_spike,28,0,0.0
+order-service,latency_spike,28,28,100.0
+payment-service,request_rate_spike,28,28,100.0
+payment-service,error_ratio_spike,28,0,0.0
+payment-service,latency_spike,28,26,92.86
+user-service,request_rate_spike,29,29,100.0
+user-service,error_ratio_spike,29,5,17.24
+user-service,latency_spike,29,29,100.0

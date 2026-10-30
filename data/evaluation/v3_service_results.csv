@@ -1,0 +1,4 @@
+service,train_rows,validation_rows,test_rows,threshold,samples,TN,FP,FN,TP,accuracy_percent,precision_percent,recall_percent,f1_percent,false_positive_rate_percent
+order-service,252,84,84,-0.20550475335462737,168,84,0,28,56,83.33,100.0,66.67,80.0,0.0
+payment-service,252,84,84,-0.18841453815346396,168,83,1,30,54,81.55,98.18,64.29,77.7,1.19
+user-service,258,86,87,-0.09835966668213518,174,70,17,24,63,76.44,78.75,72.41,75.45,19.54

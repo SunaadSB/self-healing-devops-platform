@@ -1,0 +1,7 @@
+version,service,train_rows,validation_rows,test_rows,validation_threshold,samples,TN,FP,FN,TP,accuracy_percent,precision_percent,recall_percent,f1_percent,false_positive_rate_percent
+V2,order-service,252,84,84,0.19111343956389992,168,63,21,21,63,75.0,75.0,75.0,75.0,25.0
+V3,order-service,252,84,84,0.1907450434764521,168,63,21,21,63,75.0,75.0,75.0,75.0,25.0
+V2,payment-service,252,84,84,0.08837072506292376,168,82,2,27,57,82.74,96.61,67.86,79.72,2.38
+V3,payment-service,252,84,84,0.08391383080182568,168,82,2,27,57,82.74,96.61,67.86,79.72,2.38
+V2,user-service,258,86,87,0.19273872916898527,174,62,25,21,66,73.56,72.53,75.86,74.16,28.74
+V3,user-service,258,86,87,0.194960092033915,174,62,25,21,66,73.56,72.53,75.86,74.16,28.74

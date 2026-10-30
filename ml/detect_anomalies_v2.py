@@ -27,7 +27,7 @@ FEATURES = [
 ]
 REQUIRED = ["timestamp", "service", *FEATURES]
 
-CONTAMINATION = 0.02
+CONTAMINATION = 0.055
 RANDOM_STATE = 42
 MIN_ROWS_PER_SERVICE = 30
 
@@ -81,7 +81,7 @@ def main():
         model = make_pipeline(
             StandardScaler(),
             IsolationForest(
-                n_estimators=200,
+                n_estimators=400,
                 contamination=CONTAMINATION,
                 random_state=RANDOM_STATE,
             ),
@@ -135,5 +135,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

@@ -1,0 +1,61 @@
+{
+  "version": "V3_TEMPORAL",
+  "dataset": "E:\\Projects\\ai-powered-self-healing\\data\\metrics_dataset.csv",
+  "features": [
+    "request_rate",
+    "error_ratio",
+    "p95_latency_seconds",
+    "request_rate_roll5_mean",
+    "request_rate_roll5_std",
+    "request_rate_roll15_mean",
+    "request_rate_roll15_std",
+    "request_rate_change",
+    "request_rate_deviation",
+    "latency_roll5_mean",
+    "latency_roll5_std",
+    "latency_roll15_mean",
+    "latency_roll15_std",
+    "latency_change",
+    "latency_deviation"
+  ],
+  "services": {
+    "order-service": {
+      "total_rows": 460,
+      "training_rows": 322,
+      "validation_rows": 69,
+      "testing_rows": 69,
+      "threshold": -0.16024084873523833,
+      "test_anomalies": 17,
+      "test_anomaly_percentage": 24.64,
+      "model_path": "E:\\Projects\\ai-powered-self-healing\\ml\\models_v3_temporal\\order-service-isolation-forest-temporal.joblib"
+    },
+    "payment-service": {
+      "total_rows": 460,
+      "training_rows": 322,
+      "validation_rows": 69,
+      "testing_rows": 69,
+      "threshold": -0.08470978723188308,
+      "test_anomalies": 5,
+      "test_anomaly_percentage": 7.25,
+      "model_path": "E:\\Projects\\ai-powered-self-healing\\ml\\models_v3_temporal\\payment-service-isolation-forest-temporal.joblib"
+    },
+    "user-service": {
+      "total_rows": 460,
+      "training_rows": 322,
+      "validation_rows": 69,
+      "testing_rows": 69,
+      "threshold": 0.023256612970614408,
+      "test_anomalies": 0,
+      "test_anomaly_percentage": 0.0,
+      "model_path": "E:\\Projects\\ai-powered-self-healing\\ml\\models_v3_temporal\\user-service-isolation-forest-temporal.joblib"
+    }
+  },
+  "limitations": [
+    "No confirmed incident labels in the source dataset.",
+    "Validation threshold is calibrated on normal observations.",
+    "Anomaly predictions are not confirmed incidents.",
+    "Synthetic anomaly evaluation must be performed separately."
+  ],
+  "rows_scored": 1380,
+  "report": "E:\\Projects\\ai-powered-self-healing\\data\\evaluation\\v3_temporal\\v3_temporal_predictions.csv"
+}

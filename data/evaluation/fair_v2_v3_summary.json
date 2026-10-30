@@ -1,0 +1,297 @@
+{
+  "evaluation": "Identical chronological 60/20/20 splits and synthetic anomalies",
+  "threshold_selection": "Maximum validation recall subject to validation FPR <= 5%",
+  "seed": 42,
+  "contamination": 0.055,
+  "overall_test_results": [
+    {
+      "version": "V2",
+      "samples": 510,
+      "TN": 207,
+      "FP": 48,
+      "FN": 69,
+      "TP": 186,
+      "accuracy_percent": 77.06,
+      "precision_percent": 79.49,
+      "recall_percent": 72.94,
+      "f1_percent": 76.07,
+      "false_positive_rate_percent": 18.82
+    },
+    {
+      "version": "V3",
+      "samples": 510,
+      "TN": 207,
+      "FP": 48,
+      "FN": 69,
+      "TP": 186,
+      "accuracy_percent": 77.06,
+      "precision_percent": 79.49,
+      "recall_percent": 72.94,
+      "f1_percent": 76.07,
+      "false_positive_rate_percent": 18.82
+    }
+  ],
+  "per_service_results": [
+    {
+      "version": "V2",
+      "service": "order-service",
+      "train_rows": 252,
+      "validation_rows": 84,
+      "test_rows": 84,
+      "validation_threshold": 0.19111343956389992,
+      "samples": 168,
+      "TN": 63,
+      "FP": 21,
+      "FN": 21,
+      "TP": 63,
+      "accuracy_percent": 75.0,
+      "precision_percent": 75.0,
+      "recall_percent": 75.0,
+      "f1_percent": 75.0,
+      "false_positive_rate_percent": 25.0
+    },
+    {
+      "version": "V3",
+      "service": "order-service",
+      "train_rows": 252,
+      "validation_rows": 84,
+      "test_rows": 84,
+      "validation_threshold": 0.1907450434764521,
+      "samples": 168,
+      "TN": 63,
+      "FP": 21,
+      "FN": 21,
+      "TP": 63,
+      "accuracy_percent": 75.0,
+      "precision_percent": 75.0,
+      "recall_percent": 75.0,
+      "f1_percent": 75.0,
+      "false_positive_rate_percent": 25.0
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "train_rows": 252,
+      "validation_rows": 84,
+      "test_rows": 84,
+      "validation_threshold": 0.08837072506292376,
+      "samples": 168,
+      "TN": 82,
+      "FP": 2,
+      "FN": 27,
+      "TP": 57,
+      "accuracy_percent": 82.74,
+      "precision_percent": 96.61,
+      "recall_percent": 67.86,
+      "f1_percent": 79.72,
+      "false_positive_rate_percent": 2.38
+    },
+    {
+      "version": "V3",
+      "service": "payment-service",
+      "train_rows": 252,
+      "validation_rows": 84,
+      "test_rows": 84,
+      "validation_threshold": 0.08391383080182568,
+      "samples": 168,
+      "TN": 82,
+      "FP": 2,
+      "FN": 27,
+      "TP": 57,
+      "accuracy_percent": 82.74,
+      "precision_percent": 96.61,
+      "recall_percent": 67.86,
+      "f1_percent": 79.72,
+      "false_positive_rate_percent": 2.38
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "train_rows": 258,
+      "validation_rows": 86,
+      "test_rows": 87,
+      "validation_threshold": 0.19273872916898527,
+      "samples": 174,
+      "TN": 62,
+      "FP": 25,
+      "FN": 21,
+      "TP": 66,
+      "accuracy_percent": 73.56,
+      "precision_percent": 72.53,
+      "recall_percent": 75.86,
+      "f1_percent": 74.16,
+      "false_positive_rate_percent": 28.74
+    },
+    {
+      "version": "V3",
+      "service": "user-service",
+      "train_rows": 258,
+      "validation_rows": 86,
+      "test_rows": 87,
+      "validation_threshold": 0.194960092033915,
+      "samples": 174,
+      "TN": 62,
+      "FP": 25,
+      "FN": 21,
+      "TP": 66,
+      "accuracy_percent": 73.56,
+      "precision_percent": 72.53,
+      "recall_percent": 75.86,
+      "f1_percent": 74.16,
+      "false_positive_rate_percent": 28.74
+    }
+  ],
+  "per_anomaly_type_results": [
+    {
+      "version": "V2",
+      "service": "order-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "order-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 28,
+      "detected": 7,
+      "recall_percent": 25.0
+    },
+    {
+      "version": "V2",
+      "service": "order-service",
+      "anomaly_type": "latency_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V3",
+      "service": "order-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V3",
+      "service": "order-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 28,
+      "detected": 7,
+      "recall_percent": 25.0
+    },
+    {
+      "version": "V3",
+      "service": "order-service",
+      "anomaly_type": "latency_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 28,
+      "detected": 1,
+      "recall_percent": 3.57
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "anomaly_type": "latency_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V3",
+      "service": "payment-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V3",
+      "service": "payment-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 28,
+      "detected": 1,
+      "recall_percent": 3.57
+    },
+    {
+      "version": "V3",
+      "service": "payment-service",
+      "anomaly_type": "latency_spike",
+      "total": 28,
+      "detected": 28,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 29,
+      "detected": 29,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 29,
+      "detected": 8,
+      "recall_percent": 27.59
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "anomaly_type": "latency_spike",
+      "total": 29,
+      "detected": 29,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V3",
+      "service": "user-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 29,
+      "detected": 29,
+      "recall_percent": 100.0
+    },
+    {
+      "version": "V3",
+      "service": "user-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 29,
+      "detected": 8,
+      "recall_percent": 27.59
+    },
+    {
+      "version": "V3",
+      "service": "user-service",
+      "anomaly_type": "latency_spike",
+      "total": 29,
+      "detected": 29,
+      "recall_percent": 100.0
+    }
+  ],
+  "limitations": [
+    "Original test observations are assumed normal.",
+    "Injected anomalies are synthetic, not confirmed incidents.",
+    "Error ratio is constant in the source dataset.",
+    "Validation FPR constraint does not guarantee test FPR <= 5%.",
+    "Benchmark performance is not production accuracy."
+  ]
+}

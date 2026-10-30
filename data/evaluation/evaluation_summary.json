@@ -1,0 +1,182 @@
+{
+  "evaluation_method": "70/30 chronological split with synthetic anomalies",
+  "results": [
+    {
+      "version": "V1",
+      "test_samples": 828,
+      "true_negatives": 413,
+      "false_positives": 1,
+      "false_negatives": 315,
+      "true_positives": 99,
+      "accuracy_percent": 61.84,
+      "precision_percent": 99.0,
+      "recall_percent": 23.91,
+      "f1_score_percent": 38.52,
+      "false_positive_rate_percent": 0.24
+    },
+    {
+      "version": "V2",
+      "test_samples": 764,
+      "true_negatives": 372,
+      "false_positives": 10,
+      "false_negatives": 203,
+      "true_positives": 179,
+      "accuracy_percent": 72.12,
+      "precision_percent": 94.71,
+      "recall_percent": 46.86,
+      "f1_score_percent": 62.7,
+      "false_positive_rate_percent": 2.62
+    }
+  ],
+  "anomaly_types": [
+    {
+      "version": "V1",
+      "service": "order-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 46,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V1",
+      "service": "order-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 46,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V1",
+      "service": "order-service",
+      "anomaly_type": "latency_spike",
+      "total": 46,
+      "detected": 44,
+      "detection_recall_percent": 95.65
+    },
+    {
+      "version": "V1",
+      "service": "payment-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 46,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V1",
+      "service": "payment-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 46,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V1",
+      "service": "payment-service",
+      "anomaly_type": "latency_spike",
+      "total": 46,
+      "detected": 46,
+      "detection_recall_percent": 100.0
+    },
+    {
+      "version": "V1",
+      "service": "user-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 46,
+      "detected": 1,
+      "detection_recall_percent": 2.17
+    },
+    {
+      "version": "V1",
+      "service": "user-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 46,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V1",
+      "service": "user-service",
+      "anomaly_type": "latency_spike",
+      "total": 46,
+      "detected": 8,
+      "detection_recall_percent": 17.39
+    },
+    {
+      "version": "V2",
+      "service": "order-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 42,
+      "detected": 42,
+      "detection_recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "order-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 42,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V2",
+      "service": "order-service",
+      "anomaly_type": "latency_spike",
+      "total": 42,
+      "detected": 42,
+      "detection_recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 42,
+      "detected": 42,
+      "detection_recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 42,
+      "detected": 0,
+      "detection_recall_percent": 0.0
+    },
+    {
+      "version": "V2",
+      "service": "payment-service",
+      "anomaly_type": "latency_spike",
+      "total": 42,
+      "detected": 1,
+      "detection_recall_percent": 2.38
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "anomaly_type": "request_rate_spike",
+      "total": 44,
+      "detected": 44,
+      "detection_recall_percent": 100.0
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "anomaly_type": "error_ratio_spike",
+      "total": 43,
+      "detected": 3,
+      "detection_recall_percent": 6.98
+    },
+    {
+      "version": "V2",
+      "service": "user-service",
+      "anomaly_type": "latency_spike",
+      "total": 43,
+      "detected": 5,
+      "detection_recall_percent": 11.63
+    }
+  ],
+  "limitations": [
+    "Held-out original observations are assumed normal, not independently verified.",
+    "Synthetic anomalies are controlled injections, not confirmed production incidents.",
+    "Results measure performance on this benchmark, not guaranteed real-world accuracy."
+  ]
+}

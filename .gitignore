@@ -1,15 +1,45 @@
-﻿.venv/
+﻿# Python environments and caches
+.venv/
+.venv-ml/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Logs and temporary files
 *.log
-data/raw/*
-data/processed/*
-data/evaluation/*
-models/candidates/*
-models/production/*
-reports/*
-logs/*
+logs/
+*.backup*
+*.bak
+*.pre*
+*.stage6*
+backups/
+stage6-backup-*/
+
+# Generated artifacts
+artifacts/
+
+# Generated datasets
+data/raw/
+data/processed/
+
+# Evaluation predictions and generated datasets
+data/evaluation/*predictions*.csv
+
+# Temporary reports
+reports/
+
+# Model deployment directories
+models/candidates/
+models/production/
+
+# Additional temporary backup files
+*.bak-*
+*.before-restore.*
+
+# Temporary smoke-test models
+ml/models_smoke_20261022/

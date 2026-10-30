@@ -1,1 +1,5 @@
 timestamp,service,recommendation,status,reason,consecutive_anomalies,anomaly_score,request_rate,error_ratio,p95_latency_seconds,cooldown_minutes
+2026-10-18T11:20:53.857693+00:00,order-service,review_recovery,advisory_only,3_consecutive_anomaly_records_within_90_seconds,3,-0.11364018254194008,0.5695224147750387,0.0,0.0235668486406262,10
+2026-10-18T11:20:53.857693+00:00,payment-service,review_recovery,advisory_only,3_consecutive_anomaly_records_within_90_seconds,3,-0.0948319999044882,0.5695243454707559,0.0,0.0047714716223003,10
+2026-10-18T11:21:53.893266+00:00,user-service,review_recovery,advisory_only,3_consecutive_anomaly_records_within_90_seconds,3,-0.0291601690924862,0.5695243454707559,0.0,0.0047784431137724,10
+2026-10-21T18:40:19.437268+00:00,user-service,review_recovery,advisory_only,3_consecutive_anomaly_records_within_90_seconds,3,-0.014653447918869467,0.3627512136909766,0.0,0.0055416666666666,10
