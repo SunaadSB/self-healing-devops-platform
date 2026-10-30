@@ -13,6 +13,7 @@ The example application contains three services—**User**, **Order**, and **Pay
 - [Features](#features)
 - [Architecture](#architecture)
 - [Machine learning approach](#machine-learning-approach)
+- [Measured model evaluation results](docs/MODEL_EVALUATION.md)
 - [End-to-end workflow](#end-to-end-workflow)
 - [Repository structure](#repository-structure)
 - [Requirements](#requirements)
